@@ -51,9 +51,9 @@ function useShiftRange() {
 }
 
 export function useMessageSelector() {
-  const [selection, setSelection] = useState(new Set<number>());
-  const updateSelection: Updater<Set<number>> = (updater) => {
-    const newSelection = new Set<number>(selection);
+  const [selection, setSelection] = useState(new Set<string>());
+  const updateSelection: Updater<Set<string>> = (updater) => {
+    const newSelection = new Set<string>(selection);
     updater(newSelection);
     setSelection(newSelection);
   };
@@ -65,8 +65,8 @@ export function useMessageSelector() {
 }
 
 export function MessageSelector(props: {
-  selection: Set<number>;
-  updateSelection: Updater<Set<number>>;
+  selection: Set<string>;
+  updateSelection: Updater<Set<string>>;
   defaultSelectAll?: boolean;
   onSelected?: (messages: ChatMessage[]) => void;
 }) {
@@ -75,7 +75,7 @@ export function MessageSelector(props: {
   const isValid = (m: ChatMessage) => m.content && !m.isError && !m.streaming;
   const messages = session.messages.filter(
     (m, i) =>
-      m.id && // messsage must has id
+      m.id && // message must have id
       isValid(m) &&
       (i >= session.messages.length - 1 || isValid(session.messages[i + 1])),
   );
@@ -83,18 +83,18 @@ export function MessageSelector(props: {
   const config = useAppConfig();
 
   const [searchInput, setSearchInput] = useState("");
-  const [searchIds, setSearchIds] = useState(new Set<number>());
-  const isInSearchResult = (id: number) => {
+  const [searchIds, setSearchIds] = useState(new Set<string>());
+  const isInSearchResult = (id: string) => {
     return searchInput.length === 0 || searchIds.has(id);
   };
   const doSearch = (text: string) => {
-    const searchResuts = new Set<number>();
+    const searchResults = new Set<string>();
     if (text.length > 0) {
       messages.forEach((m) =>
-        m.content.includes(text) ? searchResuts.add(m.id!) : null,
+        m.content.includes(text) ? searchResults.add(m.id!) : null,
       );
     }
-    setSearchIds(searchResuts);
+    setSearchIds(searchResults);
   };
 
   // for range selection
@@ -126,6 +126,8 @@ export function MessageSelector(props: {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [startIndex, endIndex]);
 
+  const LATEST_COUNT = 4;
+
   return (
     <div className={styles["message-selector"]}>
       <div className={styles["message-filter"]}>
@@ -155,7 +157,7 @@ export function MessageSelector(props: {
               props.updateSelection((selection) => {
                 selection.clear();
                 messages
-                  .slice(messageCount - 10)
+                  .slice(messageCount - LATEST_COUNT)
                   .forEach((m) => selection.add(m.id!));
               })
             }
